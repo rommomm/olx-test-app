@@ -3,8 +3,8 @@
 namespace App\Jobs;
 
 use App\Mail\ProductSubscriptionNotification;
-use App\Models\Email;
-use App\Models\Product;
+use App\Models\TrackableProduct;
+use App\Models\TrackingEmail;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -16,16 +16,18 @@ class SendSubscriptionNotification implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public Product $product;
+    public TrackableProduct $product;
+    public TrackingEmail $email;
 
-    public function __construct(Product $product)
+    public function __construct(TrackingEmail $email, TrackableProduct $product)
     {
+        $this->email = $email;
         $this->product = $product;
     }
 
     public function handle(): void
     {
-        Mail::to($this->product->email->value('email'))
+        Mail::to($this->email)
             ->send(new ProductSubscriptionNotification($this->product));
     }
 }

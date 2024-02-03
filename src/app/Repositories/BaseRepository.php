@@ -23,6 +23,11 @@ class BaseRepository
         return $this->model->find($id);
     }
 
+    public function findByPartialAttribute($params)
+    {
+        return $this->model->where(...$params)->first();
+    }
+
     public function create(array $data)
     {
         return $this->model->create($data);
@@ -31,5 +36,10 @@ class BaseRepository
     public function firstOrCreate(array $attributes)
     {
         return $this->model->firstOrCreate($attributes);
+    }
+
+    public function update(array $data)
+    {
+        return $this->model->update($data);
     }
 }

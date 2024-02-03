@@ -8,20 +8,18 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::create('products', function (Blueprint $table) {
+        Schema::create('trackable_products', function (Blueprint $table) {
             $table->id();
             $table->decimal('initial_price', 10, 2);
-            $table->decimal('final_price', 10, 2)->nullable();
+            $table->decimal('new_price', 10, 2)->nullable();
             $table->string('product_link');
+            $table->string('product_id');
             $table->timestamps();
-
-            $table->unsignedBigInteger('email_id');
-            $table->foreign('email_id')->references('id')->on('emails')->onDelete('cascade');
         });
     }
 
     public function down()
     {
-        Schema::dropIfExists('products');
+        Schema::dropIfExists('trackable_products');
     }
 };

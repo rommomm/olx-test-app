@@ -3,27 +3,47 @@
 namespace App\Services;
 
 use App\Jobs\SendSubscriptionNotification;
-use App\Repositories\EmailRepository;
-use App\Repositories\ProductRepository;
+use GuzzleHttp\Client;
 
 class SubscriptionService
 {
 
+    private AbstractParserService $olxParserService;
+
     public function __construct(
-        private EmailRepository $emailRepository,
-        private ProductRepository $productRepository
+        private TrackingEmailService $emailService,
+        private TrackableProductService $productService,
     ) {
+        $this->olxParserService = new OlxParserService(new Client());
     }
 
     public function subscribe(array $data)
     {
-        $email = $this->emailRepository->firstOrCreate(['email' => $data['email']]);
+        $email = $this->emailService->firstOrCreate(['email' => $data['email']]);
+        $product = null;
 
-        $product = $email->products()->firstOrCreate([
-            'product_link' => $data['product_link'],
-            'initial_price' => '22'
-        ]);
+        if ($existingProduct = $this->productService->findByProductLink($data['product_link'])) {
+            $product = $existingProduct;
+        } else {
+            $productData = $this->olxParserService->parseProductData($data['product_link']);
 
-        SendSubscriptionNotification::dispatch($product);
+            if(!empty($productData)) {
+                $product = $this->productService->firstOrCreate([
+                    'product_link' => $productData['product_link'],
+                    'initial_price' => $productData['initial_price'],
+                    'product_id' => $productData['product_id'],
+                ]);
+            }
+        }
+
+        if ($product) {
+            $syncResult = $email->products()->syncWithoutDetaching($product);
+
+            if (!empty($syncResult['attached'])) {
+                SendSubscriptionNotification::dispatch($email, $product);
+            }
+        }
+
+        return $product;
     }
 }

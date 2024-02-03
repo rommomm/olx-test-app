@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\Product;
+use App\Models\TrackableProduct;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
@@ -12,12 +13,12 @@ class ProductSubscriptionNotification extends Mailable
 
     use Queueable, SerializesModels;
 
-    public Product $product;
+    public TrackableProduct $product;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(Product $product)
+    public function __construct(TrackableProduct $product)
     {
         $this->product = $product;
     }

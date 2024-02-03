@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up()
     {
-        Schema::create('emails', function (Blueprint $table) {
+        Schema::create('tracking_emails', function (Blueprint $table) {
             $table->id();
             $table->string('email')->unique();
             $table->timestamps();
@@ -17,6 +17,6 @@ return new class extends Migration
 
     public function down()
     {
-        Schema::dropIfExists('emails');
+        Schema::dropIfExists('tracking_emails');
     }
 };

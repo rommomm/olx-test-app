@@ -5,16 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Email extends Model
+class TrackingEmail extends Model
 {
     use HasFactory;
 
+    protected $table = 'tracking_emails';
     protected $fillable = [
         'email',
     ];
 
     public function products()
     {
-        return $this->hasMany(Product::class);
+        return $this->belongsToMany(TrackableProduct::class, 'product_email');
     }
 }
