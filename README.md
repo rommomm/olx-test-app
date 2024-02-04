@@ -67,7 +67,7 @@ After that completes, run the following to install and compile the dependencies 
 
 ## Mail Settings
 
-# Update email configuration in the .env file (Replace with your email settings)
+### Update email configuration in the .env file (Replace with your email settings)
 - `MAIL_MAILER=smtp`
 - `MAIL_HOST=sandbox.smtp.mailtrap.io`
 - `MAIL_PORT=2525`
