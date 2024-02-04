@@ -11,6 +11,7 @@ services:
     depends_on:
       - mysql
       - php
+      - redis
   php:
     build:
       args:
@@ -31,6 +32,24 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
+  redis:
+    image: redis:${REDIS_VERSION}
+    ports:
+      - ${REDIS_ON_HOST}:6379
+  worker:
+    build:
+      context: ./
+      dockerfile: ./DockerFile
+    volumes:
+      - ./src:/var/www/laravel
+    command: ["php", "artisan", "queue:work", "--queue=emails"]
+  scheduler:
+    build:
+      context: ./
+      dockerfile: ./DockerFile
+    volumes:
+      - ./src:/var/www/laravel
+    command: ["php", "artisan", "schedule:work"]
 
 volumes:
   db_data:

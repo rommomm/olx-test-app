@@ -8,6 +8,7 @@ use App\Models\TrackingEmail;
 use App\Services\OlxParserService;
 use GuzzleHttp\Client;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 
 class CheckProductPrices extends Command
 {
@@ -30,26 +31,59 @@ class CheckProductPrices extends Command
      */
     public function handle()
     {
-        $products = TrackableProduct::query()->get();
 
-        foreach ($products as $product) {
-            $currentPrice = (new OlxParserService(new Client()))->parseProductData($product->product_link, $product->product_id)['initial_price'];
+        try {
+            $this->info('Checking and updating product prices...');
 
-            if ($currentPrice && $currentPrice != $product->initial_price) {
-                $product->update(['new_price' => $currentPrice]);
-            }
+            $this->updatePriceProducts();
+            $this->sendPriceChangeNotification();
+            $this->updateInitialPriceProducts();
+
+            $this->info('Product prices check completed successfully!');
+        } catch (\Exception $e) {
+            Log::error('Error in CheckProductPrices: ' . $e->getMessage());
+            $this->error('An error occurred while checking product prices.');
         }
+    }
 
-        $emails = TrackingEmail::query()->get();
+    private function updatePriceProducts()
+    {
+        TrackableProduct::chunk(100, function ($products) {
+            foreach ($products as $product) {
+                $currentPrice = (new OlxParserService(new Client()))->parseProductData($product->product_link, $product->product_id)['initial_price'];
 
-        foreach ($emails as $email) {
-            $changedProducts = $email->products()->whereNotNull('new_price')
-            ->whereColumn('new_price', '<>', 'initial_price')
-            ->get();
-
-            if ($changedProducts->isNotEmpty()) {
-                SendPriceChangeNotification::dispatch($email, $changedProducts);
+                if ($currentPrice && $currentPrice != $product->initial_price) {
+                    $product->update(['new_price' => $currentPrice]);
+                }
             }
-        }
+        });
+    }
+
+    private function updateInitialPriceProducts()
+    {
+        TrackableProduct::chunk(100, function ($products) {
+            foreach ($products as $product) {
+                if ($new_price = $product->new_price) {
+                    $product->update(['initial_price' => $new_price]);
+                }
+            }
+        });
+    }
+
+    private function sendPriceChangeNotification()
+    {
+        TrackingEmail::chunk(100, function ($emails) {
+            foreach ($emails as $email) {
+                $changedProducts = $email->products()
+                    ->whereNotNull('new_price')
+                    ->whereColumn('new_price', '<>', 'initial_price')
+                    ->get()
+                    ->toArray();
+
+                if (!empty($changedProducts)) {
+                    SendPriceChangeNotification::dispatch($email, $changedProducts)->onQueue('emails');
+                }
+            }
+        });
     }
 }

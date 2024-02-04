@@ -40,7 +40,7 @@ class SubscriptionService
             $syncResult = $email->products()->syncWithoutDetaching($product);
 
             if (!empty($syncResult['attached'])) {
-                SendSubscriptionNotification::dispatch($email, $product);
+                SendSubscriptionNotification::dispatch($email, $product)->onQueue('emails');
             }
         }
 

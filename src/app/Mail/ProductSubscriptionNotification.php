@@ -2,7 +2,6 @@
 
 namespace App\Mail;
 
-use App\Models\Product;
 use App\Models\TrackableProduct;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
